@@ -17,12 +17,12 @@ jobs:
       - name: Copy .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
       - name: Install Dependencies
-        run: composer update
+        run: composer update --no-ansi --no-interaction --no-scripts --no-progress
       - name: Launch Pint inspection
-        run: vendor/bin/pint
+        run: vendor/bin/pint --test
 
-      - name: Commit changes
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: PHP Linting (Pint)
-          skip_fetch: true
+      # - name: Commit changes
+      #   uses: stefanzweifel/git-auto-commit-action@v4
+      #   with:
+      #     commit_message: PHP Linting (Pint)
+      #     skip_fetch: true
