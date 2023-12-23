@@ -1,14 +1,7 @@
 name: GitHub Actions Parallel Job
-
 on:
-  workflow_dispatch: null
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
   push:
-    branches:
-      - main
-
 jobs:
   run-tests:
     runs-on: ubuntu-latest
