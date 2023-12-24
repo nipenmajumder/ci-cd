@@ -1,28 +1,53 @@
-name: PHP Linting (Pint)
+name: CI
 on:
-  workflow_dispatch:
-  push:
-    branches-ignore:
-      - 'dependabot/npm_and_yarn/*'
-jobs:
-  Pint:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
-        with:
-          php-version: '8.1'
-      - uses: actions/checkout@v3
-      - name: Copy .env
-        run: php -r "file_exists('.env') || copy('.env.example', '.env');"
-      - name: Install Dependencies
-        run: composer update --no-ansi --no-interaction --no-scripts --no-progress
-      - name: Launch Pint inspection
-        run: vendor/bin/pint --test
+  pull_request:
+    branches:
+      - main
 
-      # - name: Commit changes
-      #   uses: stefanzweifel/git-auto-commit-action@v4
-      #   with:
-      #     commit_message: PHP Linting (Pint)
-      #     skip_fetch: true
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: ci_cd
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Cache composer dependencies
+      uses: actions/cache@v2
+      with:
+        path: vendor
+        key: composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          composer-
+
+    - name: Install PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 8.1
+
+    - name: Install composer dependencies
+      run: |
+        composer install --no-scripts
+
+    - name: Prepare Laravel Application
+      run: |
+        cp .env.example .env
+        php artisan key:generate
+
+    - name: Run Test suite
+      run: php artisan test
+
+    - name: Install NPM dependencies
+      run: npm install
+
